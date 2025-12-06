@@ -1,0 +1,71 @@
+version: "3.9"
+
+services:
+
+  ollama:
+    build:
+      context: ./ollama
+      dockerfile: Dockerfile
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - aso-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+    restart: unless-stopped
+
+  mcp-server:
+    build:
+      context: .
+      dockerfile: ./mcp-server/Dockerfile
+    container_name: mcp-server
+    ports:
+      - "8002:8002"
+    networks:
+      - aso-network
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./mcp-server:/app/mcp-server
+      - ./admin_root:/mnt/admin_root
+
+  adk-web:
+    build:
+      context: .
+      dockerfile: ./adk-web/Dockerfile
+    container_name: adk-web
+    ports:
+      - "3000:3000"
+    networks:
+      - aso-network
+    depends_on:
+      - mcp-server
+      - ollama
+    restart: unless-stopped
+
+    volumes:
+      - ./:/app:ro
+
+    working_dir: /app
+
+    environment:
+      ADK_AGENT_MODULE: "os_project.agent.agent:root_agent"
+      OLLAMA_URL: "http://ollama:11434"
+      MCP_URL: "http://mcp-server:8002/mcp"
+
+networks:
+  aso-network:
+    driver: bridge
+
+volumes:
+  ollama_data:
+  admin_root:

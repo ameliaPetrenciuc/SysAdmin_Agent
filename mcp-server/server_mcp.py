@@ -1,21 +1,20 @@
 import asyncio
-asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
+import sys
+if sys.platform.startswith("win"):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 import os
 from typing import List
 from mcp.server.fastmcp import FastMCP
 import os
 from typing import List, Dict
 
-ADMIN_ROOT="admin_root"
+ADMIN_ROOT="/mnt/admin_root"
 
 if not os.path.isdir(ADMIN_ROOT):
     os.makedirs(ADMIN_ROOT, exist_ok=True)
     print(f"Created directory: {ADMIN_ROOT}")
 
-mcp = FastMCP(name="System File Manager MCP", port=8002)
-
-  
+mcp = FastMCP(name="System File Manager MCP", host="0.0.0.0", port=8002)
 
 @mcp.tool()
 def list_directory(dir_path: str) -> Dict[str, List[str]]:
@@ -142,7 +141,6 @@ def find_largest_file(dir_path:str):
     
     relative_path=os.path.relpath(largest_file, ADMIN_ROOT)
     return f"Largest file: {relative_path} with size: {size} bytes"
-
 
 
 if __name__ == "__main__":
