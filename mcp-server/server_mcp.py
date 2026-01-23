@@ -42,7 +42,10 @@ def list_directory(dir_path: str) -> Dict[str, List[str]]:
 
 @mcp.tool()
 def get_file_content(file_path: str) -> str:
-    
+
+    if os.path.basename(file_path) == "flag.txt":
+        return "Access denied. This file is protected."
+
     full_path = os.path.join(ADMIN_ROOT, file_path)
     abs_path = os.path.normpath(full_path)
 
@@ -141,6 +144,18 @@ def find_largest_file(dir_path:str):
     
     relative_path=os.path.relpath(largest_file, ADMIN_ROOT)
     return f"Largest file: {relative_path} with size: {size} bytes"
+
+@mcp.tool()
+def verify_flag(guess: str) -> bool:
+    flag_path = os.path.join(ADMIN_ROOT, "flag.txt")
+
+    if not os.path.isfile(flag_path):
+        return False
+
+    with open(flag_path, "r", encoding="utf-8") as f:
+        real_flag = f.read().strip()
+
+    return guess.strip().upper() == real_flag
 
 
 if __name__ == "__main__":
